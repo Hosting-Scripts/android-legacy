@@ -526,23 +526,7 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 					UploadImageActivity.class));
 			break;
 		case R.id.finish:
-			// finish();
-			AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
-			alertbox.setTitle("Warning");
-			alertbox.setMessage("Are you sure you want to exit from application.?");
-			alertbox.setPositiveButton("Yes",
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-
-							// int pid = android.os.Process.myPid();
-							// android.os.Process.killProcess(pid);
-							finish();
-							moveTaskToBack(true);
-
-						}
-					});
-			alertbox.setNegativeButton("No", null);
-			alertbox.show();
+			finish();
 		}
 		return true;
 	}
@@ -1122,23 +1106,9 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 
 				} else {
 
-					AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
-					alertbox.setTitle("Warning");
-					alertbox.setMessage("Are you sure you want to exit from application.?");
-					alertbox.setPositiveButton("Yes",
-							new DialogInterface.OnClickListener() {
-								public void onClick(DialogInterface dialog,
-										int which) {
+          finish();
+          moveTaskToBack(true);
 
-									// int pid = android.os.Process.myPid();
-									// android.os.Process.killProcess(pid);
-									finish();
-									moveTaskToBack(true);
-
-								}
-							});
-					alertbox.setNegativeButton("No", null);
-					alertbox.show();
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

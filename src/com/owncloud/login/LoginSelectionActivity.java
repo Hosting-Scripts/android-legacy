@@ -99,21 +99,8 @@ public class LoginSelectionActivity extends WebdavMethodImpl implements
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-
-			AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
-			alertbox.setTitle("Warning");
-			alertbox.setMessage("Are you sure you want to exit from application.?");
-			alertbox.setPositiveButton("Yes",
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							finish();
-							moveTaskToBack(true);
-
-						}
-					});
-			alertbox.setNegativeButton("No", null);
-			alertbox.show();
-			
+      finish();
+      moveTaskToBack(true);
 			return true;
 		}else{
 			
