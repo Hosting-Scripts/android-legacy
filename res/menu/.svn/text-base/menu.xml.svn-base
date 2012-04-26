@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/search"
+        android:title="Search"
+        android:visible="false"/>
+
+    <item
+        android:id="@+id/newFolder"
+        android:title="New Folder"/>
+
+    <item
+        android:id="@+id/upload"
+        android:title="Upload"
+        android:visible="false"/>
+
+    <item
+        android:id="@+id/refresh"
+        android:title="Refresh"/>
+
+    <item
+        android:id="@+id/setting"
+        android:title="Setting"
+        android:visible="false"/>
+
+    <item
+        android:id="@+id/finish"
+        android:title="Close"/>
+
+</menu>

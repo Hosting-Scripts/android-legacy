@@ -1,0 +1,262 @@
+package com.owncloud.activity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.method.PasswordTransformationMethod;
+import android.view.KeyEvent;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.owncloud.R;
+import com.owncloud.common.BaseActivity;
+
+public class PassCodeActivity extends BaseActivity {
+
+	String mTextFirst;
+	String mTextSec;
+	String mTextThird;
+	String mTextFour;
+	EditText mText1;
+	EditText mText2;
+	EditText mText3;
+	EditText mText4;
+	TextView mPassHdr;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.passcodelock);
+
+		mText1 = (EditText) findViewById(R.id.txt1);
+		mText2 = (EditText) findViewById(R.id.txt2);
+		mText3 = (EditText) findViewById(R.id.txt3);
+		mText4 = (EditText) findViewById(R.id.txt4);
+		mPassHdr = (TextView) findViewById(R.id.passHdr);
+
+		mText1.addTextChangedListener(new TextWatcher() {
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				// TODO Auto-generated method stub
+				if (s.length() > 0) {
+					if (mPassHdr.getText().toString().equals("Enter pass code")) {
+						mTextFirst = mText1.getText().toString();
+					}
+					
+					mText2.requestFocus();
+				}
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		mText2.addTextChangedListener(new TextWatcher() {
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				// TODO Auto-generated method stub
+				if (s.length() > 0) {
+					if (mPassHdr.getText().toString().equals("Enter pass code")) {
+						mTextSec = mText2.getText().toString();
+					}
+
+					mText3.requestFocus();
+				}
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		mText3.addTextChangedListener(new TextWatcher() {
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				// TODO Auto-generated method stub
+				if (s.length() > 0) {
+					if (mPassHdr.getText().toString().equals("Enter pass code")) {
+						mTextThird = mText3.getText().toString();
+					}
+					mText4.requestFocus();
+				}
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		mText4.addTextChangedListener(new TextWatcher() {
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				// TODO Auto-generated method stub
+				if (s.length() > 0) {
+					if (mPassHdr.getText().toString().equals("Enter pass code")) {
+						mTextFour = mText4.getText().toString();
+					}
+
+					if (pref.getString(PREF_PASSCODE, null) != null
+							&& pref.getString(PREF_PASSCODE, null).equals(
+									"true")) {
+
+						if (mTextFirst.equals(pref.getString(
+								PREF_PASS_TXT_FIRST, null))) {
+							if (mTextSec.equals(pref.getString(
+									PREF_PASS_TXT_SECOND, null))) {
+								if (mTextThird.equals(pref.getString(
+										PREF_PASS_TXT_THIRD, null))) {
+									if (mTextFour.equals(pref.getString(
+											PREF_PASS_TXT_FOUR, null))) {
+										startActivity(new Intent(
+												getApplicationContext(),
+												DashBoardActivity.class)
+												.putExtra("From", "PassCodeOff"));
+										finish();
+									} else {
+										wrongPW();
+									}
+								} else {
+									wrongPW();
+								}
+							} else {
+								wrongPW();
+							}
+						} else {
+							wrongPW();
+						}
+
+					} else if (mPassHdr.getText().toString()
+							.equals("Reenter pass code")) {
+
+						if (mTextFirst.equals(mText1.getText().toString())) {
+							if (mTextSec.equals(mText2.getText().toString())) {
+								if (mTextThird.equals(mText3.getText()
+										.toString())) {
+									if (mTextFour.equals(mText4.getText()
+											.toString())) {
+										getSharedPreferences(PREFS_NAME,
+												MODE_PRIVATE)
+												.edit()
+												.putString(PREF_PASS_TXT_FIRST,
+														mTextFirst)
+												.putString(
+														PREF_PASS_TXT_SECOND,
+														mTextSec)
+												.putString(PREF_PASS_TXT_THIRD,
+														mTextThird)
+												.putString(PREF_PASS_TXT_FOUR,
+														mTextFour)
+												.putString(PREF_PASSCODE,
+														"true").commit();
+										startActivity(new Intent(
+												getApplicationContext(),
+												DashBoardActivity.class)
+												.putExtra("From", "PassCodeOn"));
+										finish();
+									} else {
+										wrongPW();
+									}
+								} else {
+									wrongPW();
+								}
+							} else {
+								wrongPW();
+							}
+
+						} else {
+							wrongPW();
+						}
+
+					} else {
+						mPassHdr.setText("Reenter pass code");
+						mText1.setText("");
+						mText2.setText("");
+						mText3.setText("");
+						mText4.setText("");
+						mText1.requestFocus();
+					}
+				}
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+	}
+
+	public void wrongPW() {
+		Toast.makeText(getApplicationContext(), "Pass Code not match", 1)
+				.show();
+		mPassHdr.setText("Enter pass code");
+		mText1.setText("");
+		mText2.setText("");
+		mText3.setText("");
+		mText4.setText("");
+		mText1.requestFocus();
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+
+			if (getIntent().getExtras().getString("From").equals("dashboard")) {
+//			if ((!(pref.getString(PREF_PASSCODE, null) == null)) 
+//					&& (!pref.getString(PREF_PASSCODE, null).equals("true"))) {
+				startActivity(new Intent(getApplicationContext(),
+						DashBoardActivity.class).putExtra("From", "PassCodeOn"));
+				finish();
+			} else if (getIntent().getExtras().getString("From").equals("splash")) {
+				finish();
+			}
+			return true;
+		}
+
+		return super.onKeyDown(keyCode, event);
+	}
+}

@@ -1,0 +1,341 @@
+package com.owncloud.upload;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
+import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.jackrabbit.webdav.client.methods.PutMethod;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import com.owncloud.R;
+import com.owncloud.activity.DashBoardActivity;
+import com.owncloud.common.BaseActivity;
+
+public class FileExplorer extends BaseActivity implements OnClickListener {
+
+	String dirPath;
+	FileExplorerAdapter adapter;
+	Button mCancel;
+	Button mUpload;
+//	Button mOwnCloud;
+
+	// ProgressBar mProgress;
+	public static List<String> uploadFile = new ArrayList<String>();
+
+	protected Thread t;
+	ListView mListView;
+
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.fileexplorer);
+		setTitle("File Explorer");
+		// getDir("/mnt/sdcard");
+		mListView = (ListView) findViewById(R.id.list);
+
+		mCancel = (Button) findViewById(R.id.cancel);
+		mUpload = (Button) findViewById(R.id.upload);
+		mOwnCloud = (Button) findViewById(R.id.BtnOwnCloud);
+
+		mCancel.setOnClickListener(this);
+		// mUpload.setOnClickListener(this);
+		mOwnCloud.setOnClickListener(this);
+
+		mUpload.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+
+				mUpload.setText("Uploading...");
+				mUpload.setEnabled(false);
+				mCancel.setEnabled(false);
+				mOwnCloud.setEnabled(false);
+				showDialog(1);
+
+				t = new Thread() {
+					public void run() {
+
+						Log.i("Total Files : ",
+								String.valueOf(uploadFile.size()));
+
+						if (uploadFile.size() > 0) {
+							for (int i = 0; i < uploadFile.size(); i++) {
+
+								try {
+									final File file = new File(uploadFile
+											.get(i));
+
+									Log.i("Current Uploading File :",
+											uploadFile.get(i));
+
+									FileInputStream fis = null;
+									String uploadResult = null;
+									try {
+										String fileName = file.getName()
+												.replace(" ", "");
+										fis = new FileInputStream(file);
+										uploadResult = uploadFile(fileLocation,
+												"", fis, fileName,
+												BaseActivity.httpClient);
+										Log.i("Upload File==>", "Loc :"
+												+ fileLocation + "File :"
+												+ file.getName());
+									} catch (Exception e) {
+										// TODO Auto-generated catch
+										// block
+										Log.i("Upload Exception :",
+												e.toString());
+										e.printStackTrace();
+									}
+
+									if (uploadResult.equals(null)) {
+										runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												Toast.makeText(
+														FileExplorer.this,
+														"There is some problem while uploading file.",
+														1).show();
+											}
+										});
+									} else {
+										runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												Toast.makeText(FileExplorer.this,
+														"File uploaded successfully", 1)
+														.show();
+												Log.i("File Upload Msg",
+												"File uploaded successfully");
+											}
+										});
+									}
+									if (i == uploadFile.size() - 1) {
+										FileExplorer.this
+												.startActivity(new Intent(
+														FileExplorer.this,
+														DashBoardActivity.class)
+														.putExtra("From",
+																"FileExplorer")
+														.putExtra("newdir",
+																"newDir"));
+										finish();
+									}
+
+								} catch (Exception e) {
+									// TODO Auto-generated catch
+									// block
+									Log.i("Invalid file format", e.toString());
+									e.printStackTrace();
+									Toast.makeText(FileExplorer.this,
+											"Invalid file format",
+											Toast.LENGTH_LONG).show();
+								}
+							}
+						} else {
+							runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									Toast.makeText(FileExplorer.this,
+											"Please select file first", 1).show();
+								}
+							});
+						}
+						runOnUiThread(new Runnable() {
+							
+							@Override
+							public void run() {
+								mUpload.setText("Upload");
+								mUpload.setEnabled(true);
+								mCancel.setEnabled(true);
+								mOwnCloud.setEnabled(true);
+							}
+						});
+						removeDialog(1);
+					}
+				};
+				t.start();
+				
+			}
+		});
+
+		// mProgress = (ProgressBar) findViewById(R.id.progress);
+		adapter = new FileExplorerAdapter(this);
+		mListView.setAdapter(adapter);
+		if (!getIntent().getExtras().getString("fileLocation").equals("")) {
+			fileLocation = getIntent().getExtras().getString("fileLocation");
+		} else {
+			fileLocation = BaseActivity.url;
+		}
+		Log.i("FileLocation ", fileLocation);
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+
+			startActivity(new Intent(getApplicationContext(),
+					DashBoardActivity.class).putExtra("From", "FileExplorer")
+					.putExtra("newdir", "newDir"));
+			finish();
+
+			return true;
+		}
+
+		return super.onKeyDown(keyCode, event);
+	}
+
+	private Handler handler = new Handler() {
+
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			// mProgress.setVisibility(ProgressBar.VISIBLE);
+			if (msg.obj.toString().contentEquals("mCancel")) {
+
+				startActivity(new Intent(getApplicationContext(),
+						DashBoardActivity.class).putExtra("From",
+						"FileExplorer").putExtra("newdir", "newDir"));
+				finish();
+				removeDialog(0);
+			} else if (msg.obj.toString().contentEquals("mUpload")) {
+				Log.i("Total Files : ", String.valueOf(uploadFile.size()));
+
+				if (uploadFile.size() > 0) {
+					for (int i = 0; i < uploadFile.size(); i++) {
+
+						try {
+							final File file = new File(uploadFile.get(i));
+
+							Log.i("Current Uploading File :", uploadFile.get(i));
+
+							FileInputStream fis = null;
+							String uploadResult = null;
+							try {
+								String fileName = file.getName().replace(" ",
+										"");
+								fis = new FileInputStream(file);
+								uploadResult = uploadFile(fileLocation, "",
+										fis, fileName, BaseActivity.httpClient);
+								Log.i("Upload File==>", "Loc :" + fileLocation
+										+ "File :" + file.getName());
+							} catch (Exception e) {
+								// TODO Auto-generated catch
+								// block
+								Log.i("Upload Exception :", e.toString());
+								e.printStackTrace();
+							}
+
+							if (uploadResult.equals(null)) {
+								Toast.makeText(
+										FileExplorer.this,
+										"There is some problem while uploading file.",
+										1).show();
+							} else {
+								Toast.makeText(FileExplorer.this,
+										"File uploaded successfully", 1).show();
+								Log.i("File Upload Msg",
+										"File uploaded successfully");
+							}
+							if (i == uploadFile.size() - 1) {
+								FileExplorer.this.startActivity(new Intent(
+										FileExplorer.this,
+										DashBoardActivity.class).putExtra(
+										"From", "FileExplorer").putExtra(
+										"newdir", "newDir"));
+								finish();
+							}
+
+						} catch (Exception e) {
+							// TODO Auto-generated catch
+							// block
+							Log.i("Invalid file format", e.toString());
+							e.printStackTrace();
+							Toast.makeText(FileExplorer.this,
+									"Invalid file format", Toast.LENGTH_LONG)
+									.show();
+						}
+					}
+					removeDialog(1);
+				} else {
+					Toast.makeText(FileExplorer.this,
+							"Please select file first", 1).show();
+					removeDialog(1);
+				}
+				mUpload.setText("Upload");
+				mUpload.setEnabled(true);
+				mCancel.setEnabled(true);
+				mOwnCloud.setEnabled(true);
+			} else if (msg.obj.toString().contentEquals("mOwnCloud")) {
+
+				startActivity(new Intent(getApplicationContext(),
+						ChooseUploadLocation.class).putExtra("Url", mainUrl));
+				// finish();
+				removeDialog(0);
+			}
+
+			// mProgress.setVisibility(ProgressBar.GONE);
+		}
+	};
+
+	@Override
+	public void onClick(View v) {
+		// TODO Auto-generated method stub
+
+		if (v == mCancel) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mCancel";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mUpload) {
+			mUpload.setText("Uploading...");
+			mUpload.setEnabled(false);
+			mCancel.setEnabled(false);
+			mOwnCloud.setEnabled(false);
+			showDialog(1);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mUpload";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mOwnCloud) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mOwnCloud";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		}
+	}
+
+}

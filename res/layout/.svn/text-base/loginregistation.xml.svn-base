@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/app_bg"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="0dp"
+        android:background="@drawable/top_title_logo" />
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="10dp"
+            android:orientation="vertical" >
+
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="First Name" />
+
+            <EditText
+                android:id="@+id/firstName"
+                style="@style/TextStyle"
+                android:singleLine="true" />
+
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="Last Name" />
+
+            <EditText
+                android:id="@+id/lastName"
+                style="@style/TextStyle"
+                android:singleLine="true" />
+
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="Email" />
+
+            <EditText
+                android:id="@+id/email"
+                style="@style/TextStyle"
+                android:singleLine="true" />
+
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="Password " />
+
+            <EditText
+                android:id="@+id/password"
+                style="@style/TextStyle"
+                android:password="true"
+                android:singleLine="true" />
+
+            <ImageButton
+                android:id="@+id/loginBtn"
+                style="@style/imageBtnStyle"
+                android:layout_marginTop="15dp"
+                android:layout_marginBottom="15dp"
+                android:src="@drawable/btn_register_for_owncloud"
+                android:layout_gravity="center_horizontal"
+                android:text="Log in" />
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,273 @@
+package com.owncloud.upload;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
+import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.jackrabbit.webdav.client.methods.PutMethod;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.owncloud.R;
+import com.owncloud.activity.DashBoardActivity;
+import com.owncloud.common.BaseActivity;
+
+public class FileExplorerAdapter extends BaseAdapter {
+
+	private LayoutInflater inflater;
+	private List<String> item = null;
+	private List<String> path = null;
+	private String root = "/";
+
+	String dirPath;
+	Context context;
+
+	/**
+	 * Constructor from a list of items
+	 */
+	public FileExplorerAdapter(Context context) {
+
+		this.context = context;
+
+		item = new ArrayList<String>();
+		path = new ArrayList<String>();
+		getDir("/mnt/sdcard");
+	
+		inflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+	}
+
+	public static class ViewHolder {
+		public TextView mText1;
+		CheckBox mCheckBox;
+
+	}
+
+	@Override
+	public View getView(final int position, final View convertView, final ViewGroup parent) {
+
+		View vi = convertView;
+		ViewHolder holder;
+		if (convertView == null) {
+			vi = inflater.inflate(R.layout.row, null);
+			holder = new ViewHolder();
+			holder.mText1 = (TextView) vi.findViewById(R.id.rowtext);
+			holder.mCheckBox = (CheckBox)vi.findViewById(R.id.chkBox);
+			
+			vi.setTag(holder);
+		} else {
+			holder = (ViewHolder) vi.getTag();
+		}
+		holder.mText1.setText(item.get(position));
+		
+		if(!item.get(position).endsWith("/")){
+			holder.mCheckBox.setVisibility(View.VISIBLE);		
+		}else
+			holder.mCheckBox.setVisibility(View.INVISIBLE);
+		
+		holder.mCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				// TODO Auto-generated method stub
+				if(isChecked){
+					FileExplorer.uploadFile.add(path.get(position));
+					Log.i("File Name:",path.get(position));
+				}else{
+					if(FileExplorer.uploadFile.contains(path.get(position))){
+						FileExplorer.uploadFile.remove(path.get(position));
+						Log.i("Remove File Name:",path.get(position));
+					}
+				}
+			}
+		});
+		vi.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				
+				final File file = new File(path.get(position));
+
+				if (file.isDirectory()) {
+					if (file.canRead())
+						getDir(path.get(position));
+					
+					else {
+						new AlertDialog.Builder(context)
+								.setTitle(
+										file.getName()
+												+ "  folder can't be read!")
+								.setPositiveButton("OK",
+										new DialogInterface.OnClickListener() {
+
+											@Override
+											public void onClick(
+													DialogInterface dialog,
+													int which) {
+												// TODO Auto-generated method
+												// stub
+											}
+										}).show();
+					}
+				} /*else {
+					new AlertDialog.Builder(context)
+							.setTitle(
+									"Are you Sure you want to import "
+											+ file.getName() + " ?")
+							.setPositiveButton("Yes",
+									new DialogInterface.OnClickListener() {
+
+										@Override
+										public void onClick(
+												DialogInterface dialog,
+												int which) {
+											// TODO Auto-generated method stub
+
+											try {
+												FileInputStream fis = null;
+												String uploadResult = null;
+												try {
+													fis = new FileInputStream(
+															file);
+													uploadResult = uploadFile(
+															BaseActivity.url,
+															"",
+															fis,
+															file.getName(),
+															BaseActivity.httpClient);
+												} catch (Exception e) {
+													// TODO Auto-generated catch
+													// block
+													e.printStackTrace();
+												}
+
+												if (uploadResult.equals(null)) {
+													Toast.makeText(
+															context,
+															"There is some problem while uploading file.",
+															1).show();
+												} else {
+													Toast.makeText(
+															context,
+															"File uploaded Successfully.",
+															1).show();
+												}
+												context.startActivity(new Intent(
+														context,
+														DashBoardActivity.class)
+														.putExtra("From",
+																"FileExplorer").putExtra("newdir", "newDir"));
+												((Activity) context).finish();
+
+											} catch (Exception e) {
+												// TODO Auto-generated catch
+												// block
+												e.printStackTrace();
+												Toast.makeText(context,
+														"Invalid file format",
+														Toast.LENGTH_LONG)
+														.show();
+											}
+
+										}
+									}).setNegativeButton("No", null).show();
+				}*/
+//				getView(position, convertView, parent);
+			}
+		});
+		return vi;
+	}
+
+	@Override
+	public int getCount() {
+		// TODO Auto-generated method stub
+		return item.size();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		// TODO Auto-generated method stub
+		return position;
+	}
+
+	@Override
+	public long getItemId(int position) {
+		// TODO Auto-generated method stub
+		return position;
+	}
+
+	private void getDir(String dirPath) {
+		this.dirPath = dirPath;
+		
+		item.clear();
+		path.clear();
+		FileExplorer.uploadFile.clear();
+		
+		File f = new File(dirPath);
+		File[] files = f.listFiles();
+
+		if (!dirPath.equals(root)) {
+
+			item.add(root);
+			path.add(root);
+
+			item.add("../");
+			path.add(f.getParent());
+
+		}
+		
+		for (int i = 0; i < files.length; i++) {
+			File file = files[i];
+			path.add(file.getPath());
+			if (file.isDirectory())
+				item.add(file.getName() + "/");
+			else if (!file.isHidden())
+				item.add(file.getName());
+		}
+		
+		notifyDataSetChanged();
+	}
+
+	public String uploadFile(String url, String where, FileInputStream from,
+			String fileName, HttpClient httpClient) {
+		PutMethod putMethod = new PutMethod(url + "/" + where + fileName);
+		try {
+			RequestEntity re = new InputStreamRequestEntity(from);
+			putMethod.setRequestEntity(re);
+			httpClient.executeMethod(putMethod);
+			String test = putMethod.getResponseBodyAsString();
+			return test;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		} catch (HttpException e) {
+			e.printStackTrace();
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+}

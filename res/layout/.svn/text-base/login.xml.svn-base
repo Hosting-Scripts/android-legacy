@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/app_bg"
+    android:orientation="vertical" >
+
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="0dp"
+        android:background="@drawable/top_title_logo" />
+
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="10dp" >
+
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="ownCloud Server Url" />
+
+            <EditText
+                android:id="@+id/baseUrl"
+                style="@style/TextStyle"
+                android:hint="Server Url"
+                android:singleLine="true"
+                android:layout_marginBottom="-15dp"/>
+			
+			<TextView
+                style="@style/LogTextStyle"
+                android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:textColor="#ffffff"
+                android:layout_marginLeft="5dp"
+                android:textSize="14sp"
+                android:gravity="left"
+                android:text="ex: http://a.b.c.d/owncloud/" />
+			
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="Server Url   "
+                android:visibility="gone" />
+
+            <EditText
+                android:id="@+id/serverUrl"
+                style="@style/TextStyle"
+                android:hint="Server Url"
+                android:singleLine="true"
+                android:visibility="gone"/>
+
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="User name " />
+
+            <EditText
+                android:id="@+id/userName"
+                style="@style/TextStyle"
+                android:hint="User name"
+                android:singleLine="true"/>
+
+            <TextView
+                style="@style/LogTextStyle"
+                android:text="Password " />
+
+            <EditText
+                android:id="@+id/password"
+                style="@style/TextStyle"
+                android:hint="Password"
+                android:password="true"
+                android:singleLine="true"/>
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
+                android:gravity="center" >
+
+                <ImageButton
+                    android:id="@+id/loginBtn"
+                    style="@style/imageBtnStyle"
+                    android:layout_weight="1"
+                    android:src="@drawable/btn_login" />
+
+                <ImageButton
+                    android:id="@+id/cancelBtn"
+                    style="@style/imageBtnStyle"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="20dp"
+                    android:src="@drawable/btn_calcel" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

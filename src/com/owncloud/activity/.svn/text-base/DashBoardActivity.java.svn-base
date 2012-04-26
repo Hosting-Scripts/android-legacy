@@ -1,0 +1,959 @@
+package com.owncloud.activity;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.HostConfiguration;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.jackrabbit.webdav.MultiStatus;
+
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.owncloud.R;
+import com.owncloud.login.LoginSelectionActivity;
+import com.owncloud.upload.FileExplorer;
+import com.owncloud.upload.UploadImageActivity;
+import com.sufalam.WebdavMethodImpl;
+import com.sufalam.actionbar.ActionItem;
+import com.sufalam.actionbar.NewQAAdapter;
+import com.sufalam.actionbar.QuickAction;
+
+public class DashBoardActivity extends WebdavMethodImpl implements
+		OnClickListener {
+
+	private int mSelectedRow = 0;
+	private ImageView mMoreIv = null;
+
+	ImageButton mButtonFile;
+	ImageButton mButtonUpload;
+	ImageButton mButtonSetting;
+	ImageButton mButtonUploadPhoto;
+	ImageButton mButtonUploadOther;
+	ImageButton mButtonUnlink;
+
+	LinearLayout mLayoutUpload;
+	LinearLayout mLayoutSetting;
+
+	LinearLayout mLayoutSettHelp;
+	LinearLayout mLayoutSettPass;
+	LinearLayout mLayoutSettRecommend;
+	LinearLayout mLayoutSettFeedback;
+
+	Button mListBack;
+
+	TextView mPassOnOff;
+
+	String mLastUrl = "";
+	String mFileUrl = "";
+
+	private static final int ID_DOWNLOAD = 1;
+	private static final int ID_DELETE = 2;
+	// private static final int ID_UPLOAD = 3;
+
+	ListView mListView;
+
+	String[] listUrl;
+	NewQAAdapter adapter;
+
+	String[] listName;
+
+	List<String> mListName = new ArrayList<String>();
+	int id;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.dashboard);
+
+		mListView = (ListView) findViewById(R.id.listview);
+		mListBack = (Button) findViewById(R.id.backList);
+
+		mPassOnOff = (TextView) findViewById(R.id.passOnOff);
+
+		mButtonFile = (ImageButton) findViewById(R.id.dash_file);
+		mButtonUpload = (ImageButton) findViewById(R.id.dash_upload);
+		mButtonSetting = (ImageButton) findViewById(R.id.dash_setting);
+		mButtonUploadPhoto = (ImageButton) findViewById(R.id.dash_photo_video);
+		mButtonUploadOther = (ImageButton) findViewById(R.id.dash_other_file);
+		mButtonUnlink = (ImageButton) findViewById(R.id.dash_unlink);
+
+		mLayoutSetting = (LinearLayout) findViewById(R.id.layout_setting);
+		mLayoutUpload = (LinearLayout) findViewById(R.id.layout_upload);
+		mLayoutSettHelp = (LinearLayout) findViewById(R.id.dash_sett_help);
+		mLayoutSettPass = (LinearLayout) findViewById(R.id.dash_sett_pass);
+		mLayoutSettFeedback = (LinearLayout) findViewById(R.id.dash_sett_feedback);
+		mLayoutSettRecommend = (LinearLayout) findViewById(R.id.dash_sett_recomm);
+
+		mButtonFile.setOnClickListener(this);
+		mButtonUpload.setOnClickListener(this);
+		mButtonSetting.setOnClickListener(this);
+		mButtonUploadOther.setOnClickListener(this);
+		mButtonUploadPhoto.setOnClickListener(this);
+		mButtonUnlink.setOnClickListener(this);
+		mListBack.setOnClickListener(this);
+
+		// mLayoutSetting.setOnClickListener(this);
+		// mLayoutUpload.setOnClickListener(this);
+		mLayoutSettFeedback.setOnClickListener(this);
+		mLayoutSettHelp.setOnClickListener(this);
+		mLayoutSettPass.setOnClickListener(this);
+		mLayoutSettRecommend.setOnClickListener(this);
+
+		/*
+		 * HostConfiguration config = new HostConfiguration();
+		 * config.setHost(url);
+		 * 
+		 * MultiThreadedHttpConnectionManager manager = new
+		 * MultiThreadedHttpConnectionManager(); HttpConnectionManagerParams
+		 * params = new HttpConnectionManagerParams();
+		 * 
+		 * params.setMaxConnectionsPerHost(config, 5); httpClient = new
+		 * HttpClient(manager);
+		 * 
+		 * httpClient.setHostConfiguration(config);
+		 * 
+		 * Credentials cred = new UsernamePasswordCredentials("testuser",
+		 * "testpasswd"); httpClient.getState().setCredentials(AuthScope.ANY,
+		 * cred);
+		 */
+
+		if (getIntent().getExtras().getString("From").equals("PassCodeOn")) {
+			mListView.setVisibility(View.GONE);
+			mLayoutSetting.setVisibility(View.VISIBLE);
+			mLayoutUpload.setVisibility(View.GONE);
+			mButtonFile.setImageResource(R.drawable.mn_files);
+			mButtonUpload.setImageResource(R.drawable.mn_upload);
+			mButtonSetting.setImageResource(R.drawable.mn_setting_active);
+			mListBack.setVisibility(View.GONE);
+		} else if (getIntent().getExtras().getString("From")
+				.equals("FileExplorer")) {
+			mListView.setVisibility(View.GONE);
+			mLayoutSetting.setVisibility(View.GONE);
+			mLayoutUpload.setVisibility(View.VISIBLE);
+			mButtonFile.setImageResource(R.drawable.mn_files);
+			mButtonUpload.setImageResource(R.drawable.mn_upload_active);
+			mButtonSetting.setImageResource(R.drawable.mn_setting);
+			mListBack.setVisibility(View.GONE);
+		}
+
+		try {
+			if (pref.getString(PREF_PASSCODE, null).equals("true")
+					&& pref.getString(PREF_PASSCODE, null) != null) {
+				mPassOnOff.setText("turn off");
+			} else {
+				mPassOnOff.setText("turn on");
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			mPassOnOff.setText("turn on");
+			e.printStackTrace();
+		}
+		try {
+			String test = getIntent().getExtras().getString("newdir").toString();
+			Log.d("test", test);
+		} catch (Exception e) {
+			mainUrl = url;
+		}
+		if (url.equals(mainUrl)) {
+			mListBack.setVisibility(View.GONE);
+		} 
+//		else {
+//			mListBack.setVisibility(View.VISIBLE);
+//		}
+
+		adapter = new NewQAAdapter(this);
+		ListAllFiles();
+
+		ActionItem downloadItem = new ActionItem(ID_DOWNLOAD, "Download",
+				getResources().getDrawable(R.drawable.ic_add));
+		ActionItem deleteItem = new ActionItem(ID_DELETE, "Delete",
+				getResources().getDrawable(R.drawable.ic_accept));
+//		ActionItem showItem = new ActionItem(3, "Show", getResources()
+//				.getDrawable(R.drawable.ic_add));
+
+		final QuickAction mQuickAction = new QuickAction(this);
+
+		mQuickAction.addActionItem(downloadItem);
+		mQuickAction.addActionItem(deleteItem);
+//		mQuickAction.addActionItem(showItem);
+
+		mQuickAction
+				.setOnActionItemClickListener(new QuickAction.OnActionItemClickListener() {
+					@Override
+					public void onItemClick(QuickAction quickAction, int pos,
+							int actionId) {
+						ActionItem actionItem = quickAction.getActionItem(pos);
+
+						if (actionId == ID_DOWNLOAD) { // Add item selected
+//							String url = baseUrl + listUrl[id + 1];
+							showDialog(0);
+							t = new Thread() {
+								public void run() {
+									Log.d("Download Url...", mFileUrl);
+									downloadFile(mFileUrl);
+									removeDialog(0);
+								}
+							};
+							t.start();
+													
+						} else if (actionId == ID_DELETE) {
+							showDialog(0);
+							t = new Thread() {
+								public void run() {
+									try {
+										// String deleteFile =
+										// deleteFileOrFolder(baseUrl
+										// + listUrl[id + 1], "", "", httpClient);
+										String deleteFile = deleteFileOrFolder(
+												mFileUrl, "", "", httpClient);
+										if (deleteFile == null) {
+											Toast.makeText(getApplicationContext(),
+													"File deleted Successfully.", 1)
+													.show();
+										} else {
+											Toast.makeText(
+													getApplicationContext(),
+													"There is some problem while deleting file.",
+													1).show();
+										}
+									} catch (Exception e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+										Log.i("Delete File Exception ", e.toString());
+									}
+									runOnUiThread(new Runnable() {
+										@Override
+										public void run() {
+											ListAllFiles();
+										}
+									});
+									removeDialog(0);
+								}
+							};
+							t.start();
+						}
+					}
+				});
+
+		// setup on dismiss listener, set the icon back to normal
+		mQuickAction.setOnDismissListener(new PopupWindow.OnDismissListener() {
+			@Override
+			public void onDismiss() {
+				// mMoreIv.setImageResource(R.drawable.ic_list_more);
+			}
+		});
+
+		mListView.setOnItemClickListener(new OnItemClickListener() {
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				mSelectedRow = position; // set the selected row
+
+				if (!((listUrl[position].substring(listUrl[position].length() - 1))
+						.equals("/"))) {
+
+					Log.d("new url", baseUrl);
+					
+					mFileUrl = baseUrl + listUrl[position];
+					mQuickAction.show(view);
+
+				} else {
+					// mLastUrl = url;
+
+					Log.d("new url", baseUrl);
+					
+					url = baseUrl
+							+ listUrl[position].substring(0,
+									listUrl[position].length() - 1);
+					
+					Log.d("full Url", url);
+					
+					ListAllFiles();
+				}
+				if (url.equals(mainUrl)) {
+					mListBack.setVisibility(View.GONE);
+				} else {
+//					mListBack.setVisibility(View.VISIBLE);
+				}
+			}
+		});
+
+	}
+
+	public void ListAllFiles() {
+		String textList = null;
+		MultiStatus ms = listAll(url, httpClient);
+		// if (ms.equals(null)) {
+		if (ms == null) {
+			Toast.makeText(getApplicationContext(),
+					"There is some problem in listing files", 1).show();
+		} else {
+			listUrl = new String[ms.getResponses().length - 1];
+			listName = new String[ms.getResponses().length - 1];
+			Log.e("length", String.valueOf(ms.getResponses().length));
+			if (ms.getResponses().length == 1) {
+//				listName[0] = new String("No files in this direcory. Please press back button.");
+				Toast.makeText(getApplicationContext(), 
+						"No files in this direcory. Please press back button.", 1).show();
+			} else {
+				for (int i = 1; i <= ms.getResponses().length - 1; i++) {
+					String respString = ms.getResponses()[i].getHref();
+					listUrl[i - 1] = ms.getResponses()[i].getHref();
+	
+					String fileName = new StringBuffer(listUrl[i - 1]).reverse()
+							.toString();
+					if ((fileName.substring(0, 1)).equals("/")) {
+						fileName = fileName.substring(1);
+					}
+					String[] fileNameArray = fileName.split("/");
+	
+					listName[i - 1] = new StringBuffer(fileNameArray[0]).reverse()
+							.toString();
+	
+					if (textList == null) {
+						textList = listName[i - 1] + "\n";
+					} else {
+						textList = textList + listName[i - 1] + "\n";
+					}
+	
+					Log.d("response", respString);
+			}
+			}
+
+			adapter.setData(listName);
+			mListView.setAdapter(adapter);
+
+		}
+
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.search:
+			Toast.makeText(this, "Search", Toast.LENGTH_LONG).show();
+			break;
+		case R.id.newFolder:
+			Intent intent = new Intent(getApplicationContext(),
+					CreateNewDirectory.class).putExtra("From", "DashBoard");
+			startActivity(intent);
+			// finish();
+			// Toast.makeText(this, "New Folder", Toast.LENGTH_LONG).show();
+			break;
+		case R.id.setting:
+			Toast.makeText(this, "Setting", Toast.LENGTH_LONG).show();
+			break;
+		case R.id.refresh:
+
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "refresh";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+
+			break;
+		case R.id.upload:
+
+			startActivity(new Intent(getApplicationContext(),
+					UploadImageActivity.class));
+			break;
+		case R.id.finish:
+//			finish();
+			AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
+			alertbox.setTitle("Warning");
+			alertbox.setMessage("Are you sure you want to exit from application.?");
+			alertbox.setPositiveButton("Yes",
+					new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+			
+//							int pid = android.os.Process.myPid();
+//							android.os.Process.killProcess(pid);
+							finish();
+							moveTaskToBack(true);
+							
+						}
+					});
+			alertbox.setNegativeButton("No",null);
+			alertbox.show();
+		}
+		return true;
+	}
+
+	protected void onActivityResult(int requestCode, int resultCode,
+			Intent imageReturnedIntent) {
+		super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+
+		switch (requestCode) {
+
+		case 0:
+
+			if (resultCode == RESULT_OK) {
+				Uri selectedImage = imageReturnedIntent.getData();
+				// newImg.setImageURI(selectedImage);
+
+				FileInputStream fis = null;
+				String fileName = null;
+				String uploadResult = null;
+				try {
+					fis = new FileInputStream(getRealPathFromURI(selectedImage));
+					fileName = "test.jpg";
+					uploadResult = uploadFile(url, "", fis, fileName,
+							httpClient);
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				if (uploadResult.equals(null)) {
+					Toast.makeText(getApplicationContext(),
+							"There is some problem while uploading file.", 1)
+							.show();
+				} else {
+					Toast.makeText(getApplicationContext(),
+							"File uploaded Successfully.", 1).show();
+				}
+				ListAllFiles();
+
+			}
+
+		}
+
+	}
+
+	public String getRealPathFromURI(Uri contentUri) {
+		String[] proj = { MediaStore.Images.Media.DATA };
+		Cursor cursor = managedQuery(contentUri, proj, null, null, null);
+		int column_index = cursor
+				.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+		cursor.moveToFirst();
+		return cursor.getString(column_index);
+	}
+
+//	public void downloadFile(final String url) {
+//
+//		new Thread() {
+//			public void run() {
+//				Message msg = Message.obtain();
+//				msg.what = 1;
+//				try {
+//					String url = "http://owncloud-test.dev.hive01.com/owncloud/files/webdav.php/SC20120130-173517.png";
+//					HttpURLConnection conn = (HttpURLConnection) new URL(url)
+//							.openConnection();
+//					conn.setDoInput(true);
+//					conn.setConnectTimeout(10000);
+//					conn.connect();
+//
+//					// String fileName =
+//
+//					InputStream input = conn.getInputStream();
+//
+//					String fileName = new StringBuffer(url).reverse()
+//							.toString();
+//					String[] fileNameArray = fileName.split("/");
+//					fileName = new StringBuffer(fileNameArray[0]).reverse()
+//							.toString();
+//
+//					File folder = new File(
+//							Environment.getExternalStorageDirectory()
+//									+ "/OwnCloud");
+//					boolean success = false;
+//					if (!folder.exists()) {
+//						success = folder.mkdir();
+//					}
+//					if (!success) {
+//						// Do something on success
+//						File file = new File(Environment
+//								.getExternalStorageDirectory().toString()
+//								+ "/OwnCloud/", fileName);
+//						OutputStream fOut = new FileOutputStream(file);
+//
+//						int byteCount = 0;
+//						byte[] buffer = new byte[4096];
+//						int bytesRead = -1;
+//
+//						while ((bytesRead = input.read(buffer)) != -1) {
+//							fOut.write(buffer, 0, bytesRead);
+//							byteCount += bytesRead;
+//						}
+//
+//						fOut.flush();
+//						fOut.close();
+//					} else {
+//						// Do something else on failure
+//						Toast.makeText(DashBoardActivity.this,
+//								"File can't Download", Toast.LENGTH_LONG)
+//								.show();
+//					}
+//
+//				} catch (Exception e) {
+//					// TODO: handle exception
+//					Log.e("Download error =======>", e.toString());
+//					Toast.makeText(DashBoardActivity.this, e.toString(), 1)
+//							.show();
+//					e.printStackTrace();
+//				}
+//				// messageHandler.sendMessage(msg);
+//			}
+//		}.start();
+//
+//	}
+
+	private Handler handler = new Handler() {
+
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+
+			if (!mLastUrl.equals("") && mLastUrl.equals(url)
+					|| url.equals(mainUrl)) {
+				mListBack.setVisibility(View.GONE);
+			} else {
+//				mListBack.setVisibility(View.VISIBLE);
+			}
+
+			if (msg.obj.toString().contentEquals("refresh")) {
+				ListAllFiles();
+
+			} else if (msg.obj.toString().contentEquals("mLayoutUpload")) {
+
+			} else if (msg.obj.toString().contentEquals("mButtonFile")) {
+
+				mListView.setVisibility(View.VISIBLE);
+				mLayoutSetting.setVisibility(View.GONE);
+				mLayoutUpload.setVisibility(View.INVISIBLE);
+				mButtonFile.setImageResource(R.drawable.mn_files_active);
+				mButtonUpload.setImageResource(R.drawable.mn_upload);
+				mButtonSetting.setImageResource(R.drawable.mn_setting);
+			} else if (msg.obj.toString().contentEquals("mButtonUpload")) {
+				mListView.setVisibility(View.GONE);
+				mLayoutSetting.setVisibility(View.GONE);
+				mLayoutUpload.setVisibility(View.VISIBLE);
+				mButtonFile.setImageResource(R.drawable.mn_files);
+				mButtonUpload.setImageResource(R.drawable.mn_upload_active);
+				mButtonSetting.setImageResource(R.drawable.mn_setting);
+				mListBack.setVisibility(View.GONE);
+			} else if (msg.obj.toString().contentEquals("mButtonSetting")) {
+				mListView.setVisibility(View.GONE);
+				mLayoutSetting.setVisibility(View.VISIBLE);
+				mLayoutUpload.setVisibility(View.GONE);
+				mButtonFile.setImageResource(R.drawable.mn_files);
+				mButtonUpload.setImageResource(R.drawable.mn_upload);
+				mButtonSetting.setImageResource(R.drawable.mn_setting_active);
+				mListBack.setVisibility(View.GONE);
+			} else if (msg.obj.toString().contentEquals("mButtonUploadPhoto")) {
+				// Intent i = new Intent(Intent.ACTION_PICK,
+				// android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+				// startActivityForResult(i, 0);
+				startActivity(new Intent(getApplicationContext(),
+						UploadImageActivity.class).putExtra("fileLocation", ""));
+				finish();
+
+			} else if (msg.obj.toString().contentEquals("mButtonUploadOther")) {
+				// Intent i = new Intent(
+				// Intent.ACTION_PICK,
+				// android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+				// startActivityForResult(i, 0);
+
+				startActivity(new Intent(getApplicationContext(),
+						FileExplorer.class).putExtra("fileLocation", ""));
+				finish();
+
+			} else if (msg.obj.toString().contentEquals("LayoutsettFeedback")) {
+//				Toast.makeText(getApplicationContext(), "LayoutsettFeedback", 1)
+//						.show();
+//				startActivity(new Intent(getApplicationContext(),
+//						FeedBackActivity.class));
+				
+				if (isOnline()) {
+					startActivity(new Intent(Intent.ACTION_VIEW,
+							Uri.parse("http://owncloud.com/mobile/feedback")));
+				} else {
+					WebNetworkAlert();
+				}
+
+			} else if (msg.obj.toString().contentEquals("LayoutSettHelp")) {
+//				Toast.makeText(getApplicationContext(), "LayoutSettHelp", 1)
+//						.show();
+				
+				if (isOnline()) {
+					startActivity(new Intent(Intent.ACTION_VIEW,
+							Uri.parse("http://owncloud.com/mobile/help")));
+				} else {
+					WebNetworkAlert();
+				}
+
+			} else if (msg.obj.toString().contentEquals("LayoutSettPass")) {
+
+				try {
+					if (pref.getString(PREF_PASSCODE, null).equals("true")) {
+
+						new AlertDialog.Builder(DashBoardActivity.this)
+								.setTitle("ownCloud Alert")
+								.setMessage("Are you sure you want to remove Passcode Lock?")
+								.setPositiveButton("Ok",
+										new DialogInterface.OnClickListener() {
+											public void onClick(
+													DialogInterface arg0,
+													int arg1) {
+
+												getSharedPreferences(
+														PREFS_NAME,
+														MODE_PRIVATE)
+														.edit()
+														.putString(
+																PREF_PASSCODE,
+																"false")
+														.putString(
+																PREF_PASS_TXT_FIRST,
+																"")
+														.putString(
+																PREF_PASS_TXT_SECOND,
+																"")
+														.putString(
+																PREF_PASS_TXT_THIRD,
+																"")
+														.putString(
+																PREF_PASS_TXT_THIRD,
+																"").commit();
+												mPassOnOff.setText("turn on");
+											}
+										})
+								.setNegativeButton("Not now",
+										new DialogInterface.OnClickListener() {
+											public void onClick(
+													DialogInterface arg0,
+													int arg1) {
+												// do stuff onclick of CANCEL
+												return;
+											}
+										}).show();
+
+					} else {
+
+						startActivity(new Intent(getApplicationContext(),
+								PassCodeActivity.class).putExtra("From", "dashboard"));
+						finish();
+					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					Log.i("DashBoard: PassCode", "");
+					startActivity(new Intent(getApplicationContext(),
+							PassCodeActivity.class).putExtra("From", "dashboard"));
+					finish();
+				}
+			} else if (msg.obj.toString().contentEquals("LayoutSettRecommend")) {
+
+//				mailToFriend("hello Friend");
+				
+				if (isOnline()) {
+					startActivity(new Intent(Intent.ACTION_VIEW,
+							Uri.parse("http://owncloud.com/mobile/recommend")));
+				} else {
+					WebNetworkAlert();
+				}
+
+			} else if (msg.obj.toString().contentEquals("mButtonUnlink")) {
+
+				new AlertDialog.Builder(DashBoardActivity.this)
+						.setTitle("ownCloud Alert")
+						.setMessage("Unlink android from ownCloud.")
+						.setPositiveButton("Ok",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface arg0,
+											int arg1) {
+										// do stuff onclick of YES
+										// getSharedPreferences(PREFS_NAME,
+										// MODE_PRIVATE).edit()
+										// .putString(PREF_USERNAME, "")
+										// .putString(PREF_PASSWORD, "")
+										// .putString(PREF_SERVERURL, "")
+										// .putString(PREF_BASEURL, "")
+										// .commit();
+
+										getSharedPreferences(PREFS_NAME,
+												MODE_PRIVATE)
+												.edit()
+												.putString(PREF_USERNAME, null)
+												.putString(PREF_PASSWORD, null)
+												.putString(PREF_SERVERURL, null)
+												.putString(PREF_BASEURL, null)
+												.commit();
+
+										startActivity(new Intent(
+												getApplicationContext(),
+												LoginSelectionActivity.class));
+										finish();
+
+									}
+								})
+						.setNegativeButton("Not now",
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface arg0,
+											int arg1) {
+										// do stuff onclick of CANCEL
+										return;
+									}
+								}).show();
+
+			} else if (msg.obj.toString().contentEquals("mListBack")) {
+				// url = mLastUrl;
+
+				String fileName = new StringBuffer(url).reverse().toString();
+				if ((fileName.substring(0, 1)).equals("/")) {
+					fileName = fileName.substring(1);
+				}
+				fileName = new StringBuffer(fileName).reverse().toString();
+				String[] fileNameArray = fileName.split("/");
+				for (int i = 0; i < fileNameArray.length - 1; i++) {
+					if (i == 0) {
+						url = fileNameArray[i];
+					} else {
+						url = url + "/" + fileNameArray[i];
+					}
+				}
+				if (url.equals(mainUrl)) {
+					mListBack.setVisibility(View.GONE);
+				}
+				// Toast.makeText(getApplicationContext(), url, 1).show();
+				Log.d("url", url);
+				ListAllFiles();
+			}
+
+			removeDialog(0);
+		}
+	};
+
+	@Override
+	public void onClick(View v) {
+		// TODO Auto-generated method stub
+		if (v == mLayoutSetting) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mLayoutSetting";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mLayoutUpload) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mLayoutUpload";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mButtonFile) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mButtonFile";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mButtonUpload) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mButtonUpload";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mButtonSetting) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mButtonSetting";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mButtonUploadPhoto) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mButtonUploadPhoto";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mButtonUploadOther) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mButtonUploadOther";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mLayoutSettFeedback) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "LayoutsettFeedback";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mLayoutSettHelp) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "LayoutSettHelp";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mLayoutSettPass) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "LayoutSettPass";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mLayoutSettRecommend) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "LayoutSettRecommend";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mButtonUnlink) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mButtonUnlink";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		} else if (v == mListBack) {
+			showDialog(0);
+			t = new Thread() {
+				public void run() {
+					Message toMain = handler.obtainMessage();
+					toMain.obj = "mListBack";
+					handler.sendMessage(toMain);
+				}
+			};
+			t.start();
+		}
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+
+			if(!(url.equals(mainUrl))) {
+
+				// url = mLastUrl;
+
+				String fileName = new StringBuffer(url).reverse().toString();
+				if ((fileName.substring(0, 1)).equals("/")) {
+					fileName = fileName.substring(1);
+				}
+				fileName = new StringBuffer(fileName).reverse().toString();
+				String[] fileNameArray = fileName.split("/");
+				for (int i = 0; i < fileNameArray.length - 1; i++) {
+					if (i == 0) {
+						url = fileNameArray[i];
+					} else {
+						url = url + "/" + fileNameArray[i];
+					}
+				}
+				if (url.equals(mainUrl)) {
+					mListBack.setVisibility(View.GONE);
+				}
+				// Toast.makeText(getApplicationContext(), url, 1).show();
+				Log.d("url", url);
+				ListAllFiles();
+			
+			} else {
+			
+				AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
+				alertbox.setTitle("Warning");
+				alertbox.setMessage("Are you sure you want to exit from application.?");
+				alertbox.setPositiveButton("Yes",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog, int which) {
+				
+	//							int pid = android.os.Process.myPid();
+	//							android.os.Process.killProcess(pid);
+								finish();
+								moveTaskToBack(true);
+								
+							}
+						});
+				alertbox.setNegativeButton("No",null);
+				alertbox.show();
+			}
+    
+//			finish();
+			return true;
+		}
+
+		return super.onKeyDown(keyCode, event);
+	}
+}
