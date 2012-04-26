@@ -1,52 +1,0 @@
-10
-
-dir
-16
-http://192.168.1.111:9000/svn/owncloud_android/OwnCloudApp/res
-http://192.168.1.111:9000/svn/owncloud_android
-
-
-
-2012-02-20T07:38:22.703125Z
-16
-admin
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-28e50b95-09be-4440-b178-090e00ea7868
-
-values
-dir
-
-drawable
-dir
-
-drawable-hdpi
-dir
-
-anim
-dir
-
-menu
-dir
-
-drawable-ldpi
-dir
-
-drawable-mdpi
-dir
-
-layout
-dir
-
