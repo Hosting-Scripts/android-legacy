@@ -671,6 +671,8 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 			Intent MyIntent = new Intent(Intent.ACTION_VIEW);
 
 			MyIntent.putExtra("extendedTitle", TitleText);
+			
+			MyIntent.setData(Uri.parse(mDownloadDest));
 
 			PendingIntent StartIntent = PendingIntent.getActivity(
 					getApplicationContext(), 0, MyIntent, 0);
