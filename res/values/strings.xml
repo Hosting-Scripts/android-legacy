@@ -4,5 +4,12 @@
     <string name="hello">Hello World, CloudAppUIActivity!</string>
     <string name="app_name">ownCloud</string>
     <string name="view_more"><u>Load more images</u></string>
+    
+    <string name="login_url_example">Like: cloud.example.com/owncloud"</string>
+    <string name="login_ssl_enabled">Connection will be encrypted</string>
+    <string name="login_ssl_disabled">This server does not seem to support encryption</string>
+    <string name="login_invalid_url">Invalid address - Please try again.</string>
+    <string name="login_network_error">Error - check address and network connection.</string>
+    <string name="login_testing_connection">Testing connection</string>
 
 </resources>

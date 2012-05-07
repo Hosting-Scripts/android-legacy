@@ -22,7 +22,7 @@
 					android:background="@drawable/blank_white" android:gravity="center">
 				
 				<ImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/proto"
-				    android:background="@drawable/text_http" android:layout_marginLeft="10dp" android:layout_marginTop="2dp"/>
+				    android:background="@drawable/lock_https" android:visibility="invisible" android:layout_marginLeft="10dp" android:layout_marginTop="2dp"/>
 				
 				<EditText android:id="@+id/baseUrl" 
 					android:hint="Server Url"
@@ -38,10 +38,8 @@
 			<TextView style="@style/LogTextStyle" android:layout_height="wrap_content"
 				android:layout_width="fill_parent" android:textColor="#ffffff"
 				android:layout_marginLeft="5dp" android:textSize="14sp"
-				android:gravity="left" android:text="ex: http://a.b.c.d/owncloud/" />
-			<CheckBox android:layout_width="wrap_content"
-				android:layout_height="wrap_content" android:text="enable SSL"
-				android:id="@+id/sslBtn" />
+				android:gravity="left" android:text="@string/login_url_example" 
+				android:id="@+id/connectionHint"/>
 			<TextView style="@style/LogTextStyle" android:text="Server Url   "
 				android:visibility="gone" />
 

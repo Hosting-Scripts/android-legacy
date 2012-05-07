@@ -11,6 +11,7 @@ import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.jackrabbit.webdav.MultiStatus;
 
 import android.content.Intent;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -18,33 +19,77 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.owncloud.R;
 import com.owncloud.activity.DashBoardActivity;
 import com.sufalam.WebdavMethodImpl;
 
-public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
-	/** Called when the activity is first created. */
-
+public class LoginActivity extends WebdavMethodImpl implements OnClickListener, OnFocusChangeListener {
 	EditText mUserName;
 	EditText mUserPass;
 	EditText mServerUrl;
 	EditText mBaseUrl;
-	CheckBox mSSL;
 
 	ImageButton mLoginBtn;
 	ImageButton mCancelBtn;
 	ImageView mProto;
+	TextView mConnectionHint;
 
 	String mUrl;
 	String mUrlSsl;
+	
+	private HttpConnectionTester mHttpConnectionTester = null;
+	private boolean useSSL = true;
+	
+	/**
+	 * Used for connection testing - enable / disable HTTPs automatically
+	 */
+	private Handler connectionTestHandler = new Handler() {
+		
+		@Override
+		public void handleMessage(Message msg) {
+			switch(msg.what){
+			case 0:
+				// SSL Test Started -> Provide user feedback
+				mProto.setBackgroundResource(R.drawable.login_spinner);
+				mProto.setVisibility(View.VISIBLE);
+				AnimationDrawable spinner = (AnimationDrawable) mProto.getBackground();
+				spinner.start();
+				mConnectionHint.setText(getResources().getString(R.string.login_testing_connection));
+				break;
+			case 1:
+				// Test result received
+				if(!msg.getData().getBoolean(HttpConnectionTester.MSG_KEY_URL_VALID)){
+					// Invalid URL
+					onInvalidURL();
+				} else {
+					if(msg.getData().getBoolean(HttpConnectionTester.MSG_KEY_CONNECTED)){
+						// We have contact! SSL enabled?
+						if(msg.getData().getBoolean(HttpConnectionTester.MSG_KEY_SSL_SUCCESS)){
+							onSSLSucess();
+						} else {
+							onSSLFailed();
+						}
+					} else {
+						// Connection failed. Hostname might be wrong or there is no connection
+						onNetworkError();
+					}
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid what specified for HTTP connection test message");
+			}
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -56,21 +101,10 @@ public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
 		mServerUrl = (EditText) findViewById(R.id.serverUrl);
 		mBaseUrl = (EditText) findViewById(R.id.baseUrl);
 		mProto = (ImageView) findViewById(R.id.proto);
+		mConnectionHint = (TextView) findViewById(R.id.connectionHint);
 
-		mSSL = (CheckBox) findViewById(R.id.sslBtn);
-		mSSL.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				// TODO Auto-generated method stub
-
-				if (isChecked)
-					mProto.setBackgroundResource(R.drawable.text_https);
-				else
-					mProto.setBackgroundResource(R.drawable.text_http);
-			}
-		});
+		// Check HTTPS availability on focus lost
+		mBaseUrl.setOnFocusChangeListener(this);
 
 		mLoginBtn = (ImageButton) findViewById(R.id.loginBtn);
 		mCancelBtn = (ImageButton) findViewById(R.id.cancelBtn);
@@ -90,12 +124,9 @@ public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
 
 				String url = pref.getString(PREF_SERVERURL, null);
 				if (url.contains("http://")) {
-					mProto.setBackgroundResource(R.drawable.text_http);
 					url = url.replace("http://", "");
 				} else if (url.contains("https://")) {
-					mProto.setBackgroundResource(R.drawable.text_https);
 					url = url.replace("https://", "");
-					mSSL.setChecked(true);
 				}
 				mBaseUrl.setText(url);
 			} else {
@@ -104,12 +135,9 @@ public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
 
 				String url = pref.getString(PREF_SERVERURL, null);
 				if (url.contains("http://")) {
-					mProto.setBackgroundResource(R.drawable.text_http);
 					url = url.replace("http://", "");
 				} else if (url.contains("https://")) {
-					mProto.setBackgroundResource(R.drawable.text_https);
 					url = url.replace("https://", "");
-					mSSL.setChecked(true);
 				}
 				mBaseUrl.setText(url);
 			}
@@ -137,7 +165,7 @@ public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
 					}
 					if (!(mUrl.startsWith("https://") || mUrl
 							.startsWith("http://"))) {
-						if (mSSL.isChecked()) {
+						if (useSSL) {
 							mUrl = "https://" + mUrl;
 							mUrlSsl = "https://";
 						} else {
@@ -210,8 +238,6 @@ public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
 									"PassCodeOff"));
 							finish();
 						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
 							Toast.makeText(getApplicationContext(),
 									"Please enter valid details", 1).show();
 						}
@@ -232,15 +258,70 @@ public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
 	};
 
 	@Override
+	public void onFocusChange(View v, boolean hasFocus) {
+		
+		if(!hasFocus){
+			if(mHttpConnectionTester == null){
+				mHttpConnectionTester = new HttpConnectionTester(connectionTestHandler);
+				mHttpConnectionTester.start();
+			}
+			
+			// Prepare message to test connection in a separate thread
+			Message message = new Message();
+			Bundle data = new Bundle();
+			String url = mBaseUrl.getText().toString();
+			data.putString(HttpConnectionTester.MSG_KEY_URL, url);
+			message.setData(data);
+			
+			// Send message and test
+			mHttpConnectionTester.getHandler().sendMessage(message);
+		}
+	}
+	
+	
+	
+	/**
+	 * Called, when there is no SSL connection.
+	 */
+	private void onSSLFailed(){
+		mProto.setBackgroundDrawable(getResources().getDrawable(R.drawable.lock_http));
+		mConnectionHint.setText(getResources().getString(R.string.login_ssl_disabled));
+		useSSL = false;
+	}
+	
+	/**
+	 * Called, when the SSL connection could be established
+	 */
+	private void onSSLSucess(){
+		mProto.setBackgroundDrawable(getResources().getDrawable(R.drawable.lock_https));
+		mConnectionHint.setText(getResources().getString(R.string.login_ssl_enabled));
+		useSSL = true;
+	}
+	
+	/**
+	 * Called on total connection failure
+	 */
+	private void onNetworkError(){
+		mProto.setBackgroundDrawable(getResources().getDrawable(R.drawable.login_error));
+		mConnectionHint.setText(getResources().getString(R.string.login_network_error));
+	}
+	
+	/**
+	 * Called when the URL is invalid
+	 */
+	private void onInvalidURL(){
+		mProto.setBackgroundDrawable(getResources().getDrawable(R.drawable.login_error));
+		mConnectionHint.setText(getResources().getString(R.string.login_invalid_url));
+	}
+	
+	@Override
 	public void onClick(View v) {
-		// TODO Auto-generated method stub
 
 		if (v == mLoginBtn) {
 
 			showDialog(0);
 			t = new Thread() {
 				public void run() {
-
 					Message msg = handler.obtainMessage();
 					msg.obj = "Login";
 					handler.sendMessage(msg);
@@ -252,7 +333,6 @@ public class LoginActivity extends WebdavMethodImpl implements OnClickListener {
 			showDialog(0);
 			t = new Thread() {
 				public void run() {
-
 					Message msg = handler.obtainMessage();
 					msg.obj = "cancel";
 					handler.sendMessage(msg);
