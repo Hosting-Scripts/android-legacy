@@ -303,7 +303,7 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 //					notificationDownload();
 					new AlertDialog.Builder(DashBoardActivity.this)
 							.setTitle("Download File")
-							.setMessage("Default downloding in : /ownCloud")
+							.setMessage("Default downloading to : /ownCloud")
 							.setPositiveButton("Ok",
 									new DialogInterface.OnClickListener() {
 										public void onClick(
