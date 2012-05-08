@@ -103,8 +103,8 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 	static NotificationManager notificationManager = null;
 	static Notification notification;
 	private static int progress = 10;
-	String TitleText;
-	String NotiText;
+	String titleText;
+	String notiText;
 	boolean isDownload = false;
 //	ProgressBar mProgress;
 	LinearLayout mProgress;
@@ -621,8 +621,8 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 		isDownload = false;
 		notificationManager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
 		String MyText = "Downloading";
-		TitleText = URLDecoder.decode(fileName);
-		NotiText = "Downloading...";
+		titleText = URLDecoder.decode(fileName);
+		notiText = "Downloading...";
 
 		Log.d("Download file name ",fileName + " <=======");
 		notification = new Notification(R.drawable.icon, MyText,
@@ -630,12 +630,12 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 
 		Intent MyIntent = new Intent(Intent.ACTION_VIEW);
 
-		MyIntent.putExtra("extendedTitle", TitleText);
+		MyIntent.putExtra("extendedTitle", titleText);
 
 		PendingIntent StartIntent = PendingIntent.getActivity(
 				getApplicationContext(), 0, MyIntent, 0);
-		notification.setLatestEventInfo(getApplicationContext(), TitleText,
-				NotiText, StartIntent);
+		notification.setLatestEventInfo(getApplicationContext(), titleText,
+				notiText, StartIntent);
 
 		notificationManager.notify(NOTFICATION_ID, notification);
 
@@ -662,22 +662,22 @@ public class DashBoardActivity extends WebdavMethodImpl implements
 			notificationManager.cancel(NOTFICATION_ID);
 
 			notificationManager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-			String MyText = "Downloaded";
-			TitleText = URLDecoder.decode(fileName);
-			NotiText = "Downloaded";
-			notification = new Notification(R.drawable.icon, MyText,
+			String myText = "Downloaded";
+			titleText = URLDecoder.decode(fileName);
+			notiText = "Downloaded";
+			notification = new Notification(R.drawable.icon, myText,
 					System.currentTimeMillis());
 
-			Intent MyIntent = new Intent(Intent.ACTION_VIEW);
+			Intent myIntent = new Intent(Intent.ACTION_VIEW);
 
-			MyIntent.putExtra("extendedTitle", TitleText);
+			myIntent.putExtra("extendedTitle", titleText);
 			
-			MyIntent.setData(Uri.parse(mDownloadDest));
+			myIntent.setData(Uri.parse(mDownloadDest));
 
-			PendingIntent StartIntent = PendingIntent.getActivity(
-					getApplicationContext(), 0, MyIntent, 0);
-			notification.setLatestEventInfo(getApplicationContext(), TitleText,
-					NotiText, StartIntent);
+			PendingIntent startIntent = PendingIntent.getActivity(
+					getApplicationContext(), 0, myIntent, 0);
+			notification.setLatestEventInfo(getApplicationContext(), titleText,
+					notiText, startIntent);
 
 			notificationManager.notify(NOTFICATION_ID, notification);
 			File file = new File(mDownloadDest,fileName);
