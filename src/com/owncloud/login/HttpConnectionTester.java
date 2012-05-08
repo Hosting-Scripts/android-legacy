@@ -231,7 +231,7 @@ public class HttpConnectionTester extends Thread {
 		
 		// Remove e.g. the "/owncloud" from "cloud.example.com/owncloud"
 		if(hostname.contains("/")){
-			hostname = hostname.substring(0, hostname.indexOf("/") - 1);
+			hostname = hostname.substring(0, hostname.indexOf("/"));
 		}
 		
 		return hostname;
