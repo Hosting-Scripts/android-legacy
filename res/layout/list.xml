@@ -8,33 +8,30 @@
 **
 */ 
 -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/file_listing_bg" >
 
-<LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
-	android:background="@drawable/file_listing_bg"
-	android:layout_gravity="center_horizontal">
-  
-  	<ImageView
-  		android:id="@+id/i_more"
-  		android:layout_alignParentRight="true"
-  		android:layout_width="wrap_content"
-  		android:layout_height="wrap_content"
-  		android:layout_marginLeft="20dp"
-  		android:layout_gravity="center_vertical"
-  		android:src="@drawable/icon_folder"/>
-  	
-  	<TextView
-  		android:id="@+id/t_name"
-  		android:layout_marginLeft="20dp"
-  		android:layout_alignParentLeft="true"
-  		android:layout_toLeftOf="@id/i_more"
-  		style="@style/TextStyle"
-  		android:layout_gravity="center_vertical"
-  		android:textSize="17sp"
-  		android:textColor="#ffffff"
-  		android:textStyle="bold"
-  		android:text="Text"/>
-  		
-</LinearLayout>
+    <ImageView
+        android:id="@+id/i_more"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="20dp"
+        android:src="@drawable/icon_folder" />
+
+    <TextView
+        android:id="@+id/t_name"
+        style="@style/TextStyle"
+        android:layout_width="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="20dp"
+        android:layout_toRightOf="@+id/i_more"
+        android:text="Text"
+        android:textColor="#ffffff"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+</RelativeLayout>
